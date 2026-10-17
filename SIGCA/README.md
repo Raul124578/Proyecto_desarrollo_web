@@ -25,6 +25,7 @@ Actualmente se encuentran desarrollados y probados los módulos de pacientes, re
 backend/
 ├── src/
 │   ├── config/
+|       ├── db.js
 │   ├── controllers/
 │   │   ├── pacienteController.js
 │   │   ├── responsableController.js
