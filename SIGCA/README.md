@@ -215,3 +215,5 @@ Antes de integrar nuevas funcionalidades, se recomienda comprobar que el servido
 SIGCA busca mantener una estructura organizada que facilite el desarrollo colaborativo, las pruebas y el mantenimiento del sistema.
 
 El backend actual constituye la base sobre la cual se integrarán los módulos restantes, procurando reutilizar componentes y mantener la consistencia de la información.
+
+.
