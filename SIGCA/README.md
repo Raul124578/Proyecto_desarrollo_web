@@ -101,7 +101,29 @@ Desde la carpeta `backend`, ejecutar:
 npm run dev
 ```
 
-### 6. Comprobar el funcionamiento
+### 6. Ejecutar el frontend (Vue 3 + Vite)
+
+Abrir una segunda terminal dentro de la carpeta `frontend` y ejecutar:
+
+```bash
+npm install
+npm run dev
+```
+
+El portal público y el panel administrativo estarán disponibles en:
+```text
+http://localhost:5173
+```
+
+### 7. Cargar datos de prueba (Seed)
+
+Para cargar los servicios iniciales del centro K'aslemal en MongoDB, ejecutar desde la carpeta `backend`:
+
+```bash
+node src/seed.js
+```
+
+### 8. Comprobar el funcionamiento
 
 Abrir en el navegador o Postman:
 
@@ -197,10 +219,11 @@ Para mantener el funcionamiento del sistema, los integrantes deben considerar lo
 | Responsables | Desarrollado y probado |
 | Servicios | Desarrollado y probado |
 | Validaciones para citas | Creadas, pendientes de integración |
-| Gestión de citas | Pendiente de integración |
+| Gestión de citas | Desarrollado en interfaz (Integración financiera pendiente) |
 | Pagos | Pendiente de integración |
-| Autenticación y permisos | Pendiente de integración |
-| Frontend Vue | Pendiente de integración |
+| Autenticación y permisos | Frontend funcional (Backend pendiente) |
+| Frontend Vue (K'aslemal) | Desarrollado, integrado y probado |
+
 
 ## Trabajo colaborativo
 
