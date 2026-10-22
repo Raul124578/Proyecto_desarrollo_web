@@ -83,14 +83,21 @@
               <input type="text" v-model.trim="form.parentesco" required placeholder="Ej. Madre, Padre, Tutor" />
             </div>
             <div class="campo">
-              <label>Teléfono *</label>
-              <input type="tel" v-model.trim="form.telefono" required placeholder="Ej. 55554321" />
+              <label>Teléfono (8 dígitos) *</label>
+              <input 
+                type="tel" 
+                v-model.trim="form.telefono" 
+                maxlength="8"
+                @input="form.telefono = form.telefono.replace(/\D/g, '').slice(0, 8)"
+                required 
+                placeholder="Ej. 55554321" 
+              />
             </div>
           </div>
 
           <div class="campo">
             <label>Correo Electrónico *</label>
-            <input type="email" v-model.trim="form.correo" required placeholder="ejemplo@correo.com" />
+            <input type="email" v-model.trim="form.correo" required placeholder="ejemplo@dominio.com" />
           </div>
 
           <div class="campo">
@@ -187,6 +194,20 @@ const cargarPacientes = async () => {
 };
 
 const guardarResponsable = async () => {
+  // Validación estricta de correo electrónico
+  const regexCorreo = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!regexCorreo.test(form.correo)) {
+    mostrarAlerta('Por favor ingresa un correo electrónico válido (ej. nombre@dominio.com o .gt).', 'error');
+    return;
+  }
+
+  // Validación estricta de teléfono: exactamente 8 dígitos
+  const regexTelefono = /^[0-9]{8}$/;
+  if (!regexTelefono.test(form.telefono)) {
+    mostrarAlerta('El número de teléfono debe contener exactamente 8 dígitos numéricos.', 'error');
+    return;
+  }
+
   try {
     guardando.value = true;
     await api.post('/responsables', form);

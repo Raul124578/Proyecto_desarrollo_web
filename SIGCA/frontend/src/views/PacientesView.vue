@@ -114,8 +114,15 @@
 
           <div class="campo-doble">
             <div class="campo">
-              <label>Teléfono *</label>
-              <input type="tel" v-model.trim="form.telefono" required placeholder="Ej. 55551234" />
+              <label>Teléfono (8 dígitos) *</label>
+              <input 
+                type="tel" 
+                v-model.trim="form.telefono" 
+                maxlength="8"
+                @input="form.telefono = form.telefono.replace(/\D/g, '').slice(0, 8)"
+                required 
+                placeholder="Ej. 55551234" 
+              />
             </div>
             <div class="campo">
               <label>Dirección *</label>
@@ -185,6 +192,13 @@ const cargarPacientes = async () => {
 };
 
 const guardarPaciente = async () => {
+  // Validación estricta de teléfono: exactamente 8 dígitos
+  const regexTelefono = /^[0-9]{8}$/;
+  if (!regexTelefono.test(form.telefono)) {
+    mostrarAlerta('El número de teléfono debe contener exactamente 8 dígitos numéricos.', 'error');
+    return;
+  }
+
   try {
     guardando.value = true;
     await api.post('/pacientes', form);

@@ -32,17 +32,19 @@
               id="correo" 
               type="email" 
               v-model.trim="form.correo" 
-              placeholder="maria@ejemplo.com" 
+              placeholder="ejemplo@dominio.com" 
               required 
             />
           </div>
 
           <div class="campo">
-            <label for="telefono">Teléfono de Contacto *</label>
+            <label for="telefono">Teléfono de Contacto (8 dígitos) *</label>
             <input 
               id="telefono" 
               type="tel" 
               v-model.trim="form.telefono" 
+              maxlength="8"
+              @input="form.telefono = form.telefono.replace(/\D/g, '').slice(0, 8)"
               placeholder="Ej. 55554321" 
               required 
             />
@@ -140,6 +142,20 @@ const enviarSolicitud = async () => {
 
   if (!form.nombre || !form.correo || !form.telefono || !form.servicioId || !form.fechaPreferida) {
     errorMensaje.value = 'Por favor completa todos los campos requeridos.';
+    return;
+  }
+
+  // Validación estricta de correo electrónico
+  const regexCorreo = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!regexCorreo.test(form.correo)) {
+    errorMensaje.value = 'Por favor ingresa un correo electrónico válido con su dominio y extensión (ej. usuario@dominio.com o .gt).';
+    return;
+  }
+
+  // Validación estricta de teléfono: exactamente 8 dígitos
+  const regexTelefono = /^[0-9]{8}$/;
+  if (!regexTelefono.test(form.telefono)) {
+    errorMensaje.value = 'El número de teléfono debe contener exactamente 8 dígitos numéricos.';
     return;
   }
 
