@@ -41,6 +41,7 @@ backend/
 │   │   ├── pacienteRoutes.js
 │   │   ├── responsableRoutes.js
 │   │   └── servicioRoutes.js
+│   ├── seed.js
 │   └── app.js
 ├── server.js
 ├── package.json
@@ -48,6 +49,41 @@ backend/
 ├── .env.example
 ├── .gitignore
 └── README.md
+```
+
+## Estructura del frontend
+
+```text
+frontend/
+├── public/
+│   └── logo.jpg
+├── src/
+│   ├── components/
+│   │   ├── Footer.vue
+│   │   └── Navbar.vue
+│   ├── router/
+│   │   └── index.js
+│   ├── services/
+│   │   └── api.js
+│   ├── stores/
+│   │   ├── centro.js
+│   │   └── sesion.js
+│   ├── views/
+│   │   ├── CitasCalendarioView.vue
+│   │   ├── ContactoView.vue
+│   │   ├── HomeView.vue
+│   │   ├── HorariosView.vue
+│   │   ├── LoginView.vue
+│   │   ├── PacientesView.vue
+│   │   ├── ResponsablesView.vue
+│   │   ├── ServiciosView.vue
+│   │   └── SolicitarCitaView.vue
+│   ├── App.vue
+│   ├── main.js
+│   └── style.css
+├── index.html
+├── vite.config.js
+└── package.json
 ```
 
 ## Requisitos para ejecutar el proyecto
