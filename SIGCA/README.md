@@ -6,7 +6,7 @@ SIGCA es un sistema web desarrollado para facilitar la administración de pacien
 
 El proyecto se desarrolla en equipo y utiliza una arquitectura Full Stack, con un backend encargado de procesar las solicitudes, aplicar las reglas del sistema y comunicarse con la base de datos.
 
-Actualmente se encuentran desarrollados y probados los módulos de pacientes, responsables y servicios. Los módulos de citas, pagos, autenticación y frontend se integrarán conforme avance el proyecto.
+El backend cuenta con los módulos de pacientes, responsables y servicios. La rama seguridad-finanzas incorpora autenticación JWT y roles, gestión de citas, pagos y caja diaria. La integración entre el frontend y estos nuevos endpoints se coordina con el equipo.
 
 ## Tecnologías utilizadas
 
@@ -14,10 +14,13 @@ Actualmente se encuentran desarrollados y probados los módulos de pacientes, re
 - **Express.js:** framework para desarrollar la API REST.
 - **MongoDB:** base de datos NoSQL.
 - **Mongoose:** herramienta para definir modelos y consultar MongoDB.
+- **Vue 3:** tecnología utilizada en el frontend.
+- **Vue Router:** navegación entre las vistas del frontend.
+- **Pinia:** gestión del estado del frontend.
+- **JWT:** autenticación de usuarios y protección de rutas.
+- **bcryptjs:** cifrado de contraseñas.
 - **Postman:** pruebas de los endpoints.
 - **Visual Studio Code:** entorno de desarrollo.
-- **Vue.js:** tecnología prevista para el frontend.
-- **JWT:** mecanismo previsto para autenticación.
 
 ## Estructura del backend
 
@@ -117,7 +120,7 @@ Ejemplo para desarrollo local:
 
 ```env
 PORT=3000
-MONGO_URI=mongodb://127.0.0.1:27017/sigca
+MONGO_URI=mongodb://127.0.0.1:27017/sigca?replicaSet=rs0
 JWT_SECRET=COLOCAR_UNA_CLAVE_SEGURA
 ```
 
@@ -125,7 +128,18 @@ El archivo `.env` no debe subirse al repositorio, ya que puede contener informac
 
 ### 4. Iniciar MongoDB
 
-Verificar que el servicio de MongoDB se encuentre funcionando.
+Verificar que MongoDB esté funcionando como un replica set de un solo nodo llamado `rs0`. Es necesario porque los módulos de pagos y caja usan transacciones.
+
+Si es la primera configuración, inicia MongoDB con el replica set `rs0`. Después, en `mongosh`, ejecuta una sola vez:
+
+```javascript
+rs.initiate({
+  _id: "rs0",
+  members: [{ _id: 0, host: "127.0.0.1:27017" }]
+})
+```
+
+Para comprobarlo, ejecuta `rs.status()`. Si el replica set ya está inicializado, no vuelvas a ejecutar `rs.initiate`.
 
 La base de datos utilizada es `sigca`.
 
@@ -218,18 +232,22 @@ Los servicios incluyen nombre, descripción, duración, precio, imagen y estado.
 
 Internamente, los precios se almacenan en el campo `precioCentavos` para evitar problemas de precisión con valores monetarios.
 
+### Autenticación y módulos administrativos
+
+| Recurso | Prefijo | Función |
+|---|---|---|
+| Autenticación | `/api/auth` | Inicio y consulta de sesión. |
+| Usuarios | `/api/usuarios` | Gestión de usuarios y roles. |
+| Horarios | `/api/horarios` | Gestión de horarios disponibles. |
+| Citas | `/api/citas` | Gestión de citas. |
+| Caja diaria | `/api/cajas` | Operaciones de caja diaria. |
+| Pagos | `/api/pagos` | Registro y consulta de pagos. |
+
 ## Validaciones implementadas
 
-Los módulos existentes incluyen validaciones para evitar registros incorrectos, como fechas de nacimiento futuras, duraciones inválidas y precios negativos.
+Los modelos validan campos requeridos y reglas como fechas de nacimiento no futuras, duraciones válidas y precios no negativos.
 
-También se prepararon dos middlewares para el módulo de citas:
-
-- `validarPacienteCita.js`: comprueba que el paciente exista, esté activo y, si es menor de edad, tenga un responsable asociado.
-- `validarServicioCita.js`: comprueba que el servicio exista y esté activo.
-
-Estos middlewares están creados, pero todavía deben integrarse y probarse con las rutas del módulo de citas.
-
-Ambos esperan recibir `pacienteId` y `servicioId`, respectivamente, en el cuerpo de la solicitud.
+En la creación de citas, `validarPacienteCita.js` comprueba que el paciente exista y esté activo y que, si es menor de edad, tenga un responsable asociado. `validarServicioCita.js` comprueba que el servicio exista y esté activo. Ambos middlewares están integrados en la ruta de creación de citas y reciben `pacienteId` y `servicioId` en el cuerpo de la solicitud.
 
 ## Recomendaciones para integrar los módulos
 
@@ -242,7 +260,7 @@ Para mantener el funcionamiento del sistema, los integrantes deben considerar lo
 5. Validar pacientes y servicios antes de registrar citas.
 6. Verificar la disponibilidad de los horarios para evitar reservas duplicadas.
 7. Conservar el precio del servicio al momento de crear cada cita, aunque posteriormente cambie.
-8. Integrar JWT y los permisos correspondientes antes de publicar el sistema.
+8. Verificar la integración del frontend con JWT y los permisos antes de publicar el sistema.
 9. Evitar subir archivos `.env`, carpetas `node_modules` o credenciales al repositorio.
 10. Coordinar cualquier modificación a los modelos compartidos.
 
@@ -250,19 +268,16 @@ Para mantener el funcionamiento del sistema, los integrantes deben considerar lo
 
 | Módulo | Estado |
 |---|---|
-| Conexión MongoDB | Funcional |
-| Pacientes | Desarrollado y probado |
-| Responsables | Desarrollado y probado |
-| Servicios | Desarrollado y probado |
-| Validaciones para citas | Creadas, pendientes de integración |
-| Gestión de citas | Desarrollado en interfaz (Integración financiera pendiente) |
-| Pagos | Pendiente de integración |
-| Autenticación y permisos | Frontend funcional (Backend pendiente) |
-| Frontend Vue (K'aslemal) | Desarrollado, integrado y probado |
+| Conexión MongoDB | Funcional; usa el replica set `rs0` para las transacciones. |
+| Pacientes, responsables y servicios | Desarrollados y probados. |
+| Validaciones para citas | Integradas en las rutas de citas. |
+| Gestión de citas y estados | Implementada en backend; incluida en `seguridad-finanzas`. |
+| Autenticación JWT y roles | Implementados en backend; incluidos en `seguridad-finanzas`. |
+| Pagos y caja diaria | Implementados en backend; incluidos en `seguridad-finanzas`. |
+| Frontend Vue (K'aslemal) | Desarrollado; la integración con los nuevos endpoints se coordina con el equipo. |
 
 
 ## Trabajo colaborativo
-
 El proyecto se desarrolla mediante un repositorio compartido en GitHub.
 
 Cada integrante debe trabajar en el módulo asignado, respetando los modelos, las rutas y las convenciones existentes.
@@ -273,6 +288,4 @@ Antes de integrar nuevas funcionalidades, se recomienda comprobar que el servido
 
 SIGCA busca mantener una estructura organizada que facilite el desarrollo colaborativo, las pruebas y el mantenimiento del sistema.
 
-El backend actual constituye la base sobre la cual se integrarán los módulos restantes, procurando reutilizar componentes y mantener la consistencia de la información.
-
-.
+El backend de SIGCA incluye los módulos de pacientes, responsables, servicios, citas, autenticación, pagos y caja diaria. La integración de los nuevos endpoints con el frontend se coordina con el equipo.
