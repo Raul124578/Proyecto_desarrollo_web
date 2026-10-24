@@ -1,12 +1,14 @@
-
 const mongoose = require('mongoose');
 const Paciente = require('../models/Paciente');
 
 const validarPacienteCita = async (req, res, next) => {
   try {
-    const { pacienteId } = req.body;
+    const { pacienteId } = req.body || {};
 
-    if (!mongoose.isValidObjectId(pacienteId)) {
+    if (
+      typeof pacienteId !== 'string' ||
+      !mongoose.isValidObjectId(pacienteId)
+    ) {
       return res.status(400).json({
         mensaje: 'Debe proporcionar un ID de paciente válido'
       });
@@ -26,22 +28,33 @@ const validarPacienteCita = async (req, res, next) => {
       });
     }
 
-    // La edad se calcula automáticamente en el modelo
-    if (paciente.edad < 18 && paciente.responsables.length === 0) {
+    const edad = paciente.edad;
+
+    if (!Number.isInteger(edad) || edad < 0) {
+      return res.status(400).json({
+        mensaje: 'El paciente debe tener una fecha de nacimiento válida'
+      });
+    }
+
+    if (
+      edad < 18 &&
+      (!paciente.responsables || paciente.responsables.length === 0)
+    ) {
       return res.status(400).json({
         mensaje: 'El paciente es menor de edad y debe tener al menos un responsable asociado'
       });
     }
 
-    next();
-
+    req.pacienteCita = paciente;
   } catch (error) {
-    console.error(error);
+    console.error('Error al validar paciente:', error.message);
 
     return res.status(500).json({
       mensaje: 'Error al validar el paciente para la cita'
     });
   }
+
+  return next();
 };
 
 module.exports = validarPacienteCita;
