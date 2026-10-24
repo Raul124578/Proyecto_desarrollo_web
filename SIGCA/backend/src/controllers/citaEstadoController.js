@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 const Cita = require('../models/Cita');
+const Pago = require('../models/Pago');
 
 const cambiarEstadoCita = async (req, res) => {
+  let sesion;
+
   try {
     if (!req.usuario) {
       return res.status(401).json({
@@ -41,48 +44,78 @@ const cambiarEstadoCita = async (req, res) => {
       });
     }
 
-    const filtro = { _id: id };
+    sesion = await mongoose.startSession();
 
-    // El profesional solo puede completar sus propias citas.
-    if (req.usuario.rol === 'PROFESIONAL') {
-      filtro.profesional = req.usuario._id;
-    }
+    let citaActualizada;
 
-    const cita = await Cita.findOne(filtro);
+    await sesion.withTransaction(async () => {
+      const filtro = { _id: id };
 
-    if (!cita) {
-      return res.status(404).json({
-        mensaje: 'Cita no encontrada'
-      });
-    }
+      // El profesional solo puede completar sus propias citas.
+      if (req.usuario.rol === 'PROFESIONAL') {
+        filtro.profesional = req.usuario._id;
+      }
 
-    const transiciones = {
-      PENDIENTE: ['CONFIRMADA', 'CANCELADA'],
-      CONFIRMADA: ['COMPLETADA', 'CANCELADA'],
-      COMPLETADA: [],
-      CANCELADA: []
-    };
+      const cita = await Cita.findOne(filtro).session(sesion);
 
-    if (!transiciones[cita.estado]?.includes(estado)) {
-      return res.status(409).json({
-        mensaje: `No se puede cambiar una cita de ${cita.estado} a ${estado}`
-      });
-    }
+      if (!cita) {
+        const error = new Error('Cita no encontrada');
+        error.status = 404;
+        throw error;
+      }
 
-    cita.estado = estado;
-    cita.actualizadoPor = req.usuario._id;
+      const transiciones = {
+        PENDIENTE: ['CONFIRMADA', 'CANCELADA'],
+        CONFIRMADA: ['COMPLETADA', 'CANCELADA'],
+        COMPLETADA: [],
+        CANCELADA: []
+      };
 
-    // Ejecuta las validaciones y actualiza los minutos reservados.
-    await cita.save();
+      if (!transiciones[cita.estado]?.includes(estado)) {
+        const error = new Error(
+          `No se puede cambiar una cita de ${cita.estado} a ${estado}`
+        );
+        error.status = 409;
+        throw error;
+      }
+
+      if (estado === 'CANCELADA') {
+        const pagoRegistrado = await Pago.exists({
+          cita: cita._id,
+          estado: 'REGISTRADO'
+        }).session(sesion);
+
+        if (pagoRegistrado) {
+          const error = new Error(
+            'Primero debe anular los pagos registrados antes de cancelar la cita'
+          );
+          error.status = 409;
+          throw error;
+        }
+      }
+
+      cita.estado = estado;
+      cita.actualizadoPor = req.usuario._id;
+
+      // Actualiza el estado y libera o reserva el horario dentro de la transacción.
+      await cita.save({ session: sesion });
+      citaActualizada = cita;
+    });
 
     return res.status(200).json({
       mensaje: 'Estado de la cita actualizado correctamente',
-      cita
+      cita: citaActualizada
     });
   } catch (error) {
-    if (error.name === 'VersionError') {
+    if (error.status) {
+      return res.status(error.status).json({
+        mensaje: error.message
+      });
+    }
+
+    if (error.name === 'VersionError' || error.code === 112) {
       return res.status(409).json({
-        mensaje: 'La cita fue modificada; vuelva a consultarla'
+        mensaje: 'La cita cambió durante la operación; vuelva a consultarla'
       });
     }
 
@@ -104,6 +137,10 @@ const cambiarEstadoCita = async (req, res) => {
     return res.status(500).json({
       mensaje: 'Error interno al actualizar la cita'
     });
+  } finally {
+    if (sesion) {
+      await sesion.endSession();
+    }
   }
 };
 

@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const citaRoutes = require('./routes/citaRoutes');
+const cajaRoutes = require('./routes/cajaRoutes');
+const pagoRoutes = require('./routes/pagoRoutes');
 
 const pacienteRoutes = require('./routes/pacienteRoutes');
 const responsableRoutes = require('./routes/responsableRoutes');
@@ -32,6 +34,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/horarios', horarioRoutes);
 app.use('/api/citas', citaRoutes);
+app.use('/api/cajas', cajaRoutes);
+app.use('/api/pagos', pagoRoutes);
 
 module.exports = app;
 
