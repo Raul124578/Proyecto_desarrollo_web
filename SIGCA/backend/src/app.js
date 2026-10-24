@@ -4,6 +4,8 @@ const cors = require('cors');
 
 const pacienteRoutes = require('./routes/pacienteRoutes');
 const responsableRoutes = require('./routes/responsableRoutes');
+const authRoutes = require('./routes/authRoutes');
+const usuarioRoutes = require('./routes/usuarioRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
 
 const app = express();
@@ -29,6 +31,9 @@ app.use('/api/responsables', responsableRoutes);
 
 // Rutas de servicios
 app.use('/api/servicios', servicioRoutes);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 module.exports = app;
 
