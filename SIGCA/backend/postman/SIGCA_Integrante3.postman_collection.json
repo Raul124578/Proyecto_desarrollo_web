@@ -1,0 +1,596 @@
+{
+  "info": {
+    "_postman_id": "9c9fb442-74f4-4e20-a653-1553c62b6d2c",
+    "name": "SIGCA - Integrante 3 Seguridad y Finanzas",
+    "description": "Colección para autenticación, citas, pagos y caja diaria. Flujo sugerido: estado, login, servicios, usuarios, paciente, cita, abrir caja, pago, consultar pagos, cerrar caja y verificar diferencia. Usa datos de prueba. Evita repetir el pago en una cita ya pagada.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58443821",
+    "_collection_link": "https://go.postman.co/collection/58443821-9c9fb442-74f4-4e20-a653-1553c62b6d2c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 - Estado API",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"API responde 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "status"
+          ]
+        },
+        "description": "Comprueba que el backend está disponible."
+      },
+      "response": []
+    },
+    {
+      "name": "02 - Iniciar sesión",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.test(\"Login responde 200\", () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set(\"token\", data.token);",
+              "pm.test(\"Se guardó el token JWT\", () => pm.expect(data.token).to.be.a(\"string\").and.not.empty);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"{{correoAdmin}}\",\n  \"password\": \"{{passwordAdmin}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Configura passwordAdmin como variable local antes de ejecutar. El test guarda el JWT en token."
+      },
+      "response": []
+    },
+    {
+      "name": "03 - Consultar servicios activos",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "const list = Array.isArray(data) ? data : (data.servicios || data.data || []);",
+              "pm.test(\"Servicios activos responde 200\", () => pm.response.to.have.status(200));",
+              "const service = list.find(x => x.nombre === \"Servicio de prueba\") || list[0];",
+              "if (service) {",
+              "  pm.collectionVariables.set(\"servicioId\", service._id || service.id);",
+              "  const cents = service.precioCentavos ?? Math.round(Number(service.precio) * 100);",
+              "  if (Number.isFinite(Number(cents))) pm.collectionVariables.set(\"servicioPrecioCentavos\", String(cents));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/servicios?estado=ACTIVO",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "servicios"
+          ],
+          "query": [
+            {
+              "key": "estado",
+              "value": "ACTIVO"
+            }
+          ]
+        },
+        "description": "Selecciona “Servicio de prueba” si existe y guarda su id y precio en variables."
+      },
+      "response": []
+    },
+    {
+      "name": "04 - Consultar usuarios y profesional",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "const list = Array.isArray(data) ? data : (data.usuarios || data.data || []);",
+              "pm.test(\"Usuarios responde 200\", () => pm.response.to.have.status(200));",
+              "const professional = list.find(x => x.rol === \"PROFESIONAL\");",
+              "if (professional) pm.collectionVariables.set(\"profesionalId\", professional._id || professional.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/usuarios",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "usuarios"
+          ]
+        },
+        "description": "Requiere ADMINISTRADOR. Guarda el primer usuario PROFESIONAL."
+      },
+      "response": []
+    },
+    {
+      "name": "05 - Registrar paciente de prueba",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.test(\"Paciente creado\", () => pm.response.to.have.status(201));",
+              "const patient = data.paciente || data.data || data;",
+              "const id = patient._id || patient.id;",
+              "if (id) pm.collectionVariables.set(\"pacienteId\", id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombres\": \"Paciente\",\n  \"apellidos\": \"Postman\",\n  \"fechaNacimiento\": \"2000-01-15\",\n  \"sexo\": \"OTRO\",\n  \"telefono\": \"55550001\",\n  \"direccion\": \"Guatemala\",\n  \"observaciones\": \"Paciente de prueba Postman\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/pacientes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pacientes"
+          ]
+        },
+        "description": "Crea un paciente adulto ficticio y guarda su id en pacienteId."
+      },
+      "response": []
+    },
+    {
+      "name": "06 - Registrar cita de prueba",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Próximo lunes a las 10:00 en Guatemala (16:00 UTC); formato exigido por la API.const d = new Date();const daysUntilMonday = ((1 - d.getUTCDay() + 7) % 7) || 7;d.setUTCDate(d.getUTCDate() + daysUntilMonday);d.setUTCHours(16, 0, 0, 0);pm.collectionVariables.set(\"fechaInicio\", d.toISOString().replace(/\\.\\d{3}Z$/, \"Z\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.test(\"Cita creada\", () => pm.response.to.have.status(201));",
+              "const cita = data.cita || data.data || data;",
+              "const id = cita._id || cita.id;",
+              "if (id) pm.collectionVariables.set(\"citaId\", id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pacienteId\": \"{{pacienteId}}\",\n  \"servicioId\": \"{{servicioId}}\",\n  \"profesionalId\": \"{{profesionalId}}\",\n  \"fechaInicio\": \"{{fechaInicio}}\",\n  \"observaciones\": \"Cita de prueba Postman\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/citas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "citas"
+          ]
+        },
+        "description": "Ejecuta después de paciente, servicios y profesional. Programa el siguiente lunes a las 09:00 de Guatemala."
+      },
+      "response": []
+    },
+    {
+      "name": "07 - Abrir caja",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.test(\"Caja abierta\", () => pm.response.to.have.status(201));",
+              "const caja = data.caja || data.data || data;",
+              "const id = caja._id || caja.id;",
+              "if (id) pm.collectionVariables.set(\"cajaId\", id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"montoInicialCentavos\": 0\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/cajas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cajas"
+          ]
+        },
+        "description": "Abre una caja con saldo inicial Q0 y guarda su id."
+      },
+      "response": []
+    },
+    {
+      "name": "08 - Registrar pago en efectivo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.test(\"Pago registrado\", () => pm.response.to.have.status(201));",
+              "const pago = data.pago || data.data || data;",
+              "if (pago.numeroRecibo) pm.collectionVariables.set(\"numeroRecibo\", pago.numeroRecibo);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"citaId\": \"{{citaId}}\",\n  \"montoCentavos\": {{servicioPrecioCentavos}},\n  \"metodo\": \"EFECTIVO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/pagos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pagos"
+          ]
+        },
+        "description": "Registra el pago total del servicio seleccionado, en efectivo."
+      },
+      "response": []
+    },
+    {
+      "name": "09 - Consultar pagos",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/pagos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "pagos"
+          ]
+        },
+        "description": "Verifica pagos registrados; pueden aparecer pagos anteriores anulados."
+      },
+      "response": []
+    },
+    {
+      "name": "10 - Cerrar caja",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"montoContadoCentavos\": {{servicioPrecioCentavos}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/cajas/{{cajaId}}/cerrar",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cajas",
+            "{{cajaId}}",
+            "cerrar"
+          ]
+        },
+        "description": "Cuenta el efectivo inicial más el pago registrado. Con monto inicial cero, coincide con el precio del servicio."
+      },
+      "response": []
+    },
+    {
+      "name": "11 - Verificar cierre y diferencia",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "const list = Array.isArray(data) ? data : (data.cajas || data.data || []);",
+              "const caja = list.find(x => (x._id || x.id) === pm.collectionVariables.get(\"cajaId\"));",
+              "pm.test(\"Caja aparece cerrada\", () => pm.expect(caja && caja.estado).to.eql(\"CERRADA\"));",
+              "if (caja) pm.test(\"Diferencia de caja es cero\", () => pm.expect(Number(caja.diferenciaCentavos)).to.eql(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cajas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cajas"
+          ]
+        },
+        "description": "Comprueba que la caja de esta ejecución quedó CERRADA y con diferencia de cero."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "correoAdmin",
+      "value": "admin@sigca.test"
+    },
+    {
+      "key": "passwordAdmin",
+      "value": ""
+    },
+    {
+      "key": "pacienteId",
+      "value": ""
+    },
+    {
+      "key": "servicioId",
+      "value": ""
+    },
+    {
+      "key": "servicioPrecioCentavos",
+      "value": "10000"
+    },
+    {
+      "key": "profesionalId",
+      "value": ""
+    },
+    {
+      "key": "fechaInicio",
+      "value": ""
+    },
+    {
+      "key": "citaId",
+      "value": ""
+    },
+    {
+      "key": "cajaId",
+      "value": ""
+    },
+    {
+      "key": "numeroRecibo",
+      "value": ""
+    }
+  ]
+}
