@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { randomUUID } = require('node:crypto');
 const Caja = require('../models/Caja');
 const Cita = require('../models/Cita');
 const Pago = require('../models/Pago');
@@ -108,7 +109,7 @@ const registrarPago = async (req, res) => {
         throw error;
       }
 
-      const recibo = `SIGCA-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+      const recibo = `SIGCA-${randomUUID()}`;
 
       const [pago] = await Pago.create([{
         cita: cita._id,
