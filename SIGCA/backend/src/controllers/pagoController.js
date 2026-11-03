@@ -48,82 +48,111 @@ const registrarPago = async (req, res) => {
     return res.status(400).json({ mensaje: 'Método de pago inválido' });
   }
 
+  const ejecutarRegistro = async (s) => {
+    const qCaja = Caja.findOne({
+      usuario: req.usuario._id,
+      estado: 'ABIERTA'
+    });
+    if (s) qCaja.session(s);
+    const caja = await qCaja;
+
+    if (!caja) {
+      const error = new Error('Debe abrir una caja antes de registrar pagos');
+      error.status = 409;
+      throw error;
+    }
+
+    const qCita = Cita.findById(citaId);
+    if (s) qCita.session(s);
+    const cita = await qCita;
+
+    if (!cita) {
+      const error = new Error('Cita no encontrada');
+      error.status = 404;
+      throw error;
+    }
+
+    if (cita.estado === 'CANCELADA') {
+      const error = new Error('No se pueden registrar pagos para citas canceladas');
+      error.status = 409;
+      throw error;
+    }
+
+    caja.increment();
+    if (s) {
+      await caja.save({ session: s });
+    } else {
+      await caja.save();
+    }
+
+    const aggQuery = [
+      {
+        $match: {
+          cita: cita._id,
+          estado: 'REGISTRADO'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$montoCentavos' }
+        }
+      }
+    ];
+
+    const pagosPrevios = s ? await Pago.aggregate(aggQuery).session(s) : await Pago.aggregate(aggQuery);
+
+    const totalPagado = pagosPrevios[0]?.total || 0;
+    const saldo = cita.precioCentavos - totalPagado;
+
+    if (montoCentavos > saldo) {
+      const error = new Error(
+        `El pago supera el saldo pendiente de ${Math.max(saldo, 0)} centavos`
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    const recibo = `SIGCA-${randomUUID()}`;
+
+    const nuevoPagoData = {
+      cita: cita._id,
+      paciente: cita.paciente,
+      caja: caja._id,
+      registradoPor: req.usuario._id,
+      montoCentavos,
+      metodo,
+      numeroRecibo: recibo,
+      estado: 'REGISTRADO'
+    };
+
+    let pago;
+    if (s) {
+      const [creado] = await Pago.create([nuevoPagoData], { session: s });
+      pago = creado;
+    } else {
+      pago = await Pago.create(nuevoPagoData);
+    }
+
+    return pago;
+  };
+
   const sesion = await mongoose.startSession();
 
   try {
     let pagoRegistrado;
 
-    await sesion.withTransaction(async () => {
-      const caja = await Caja.findOne({
-        usuario: req.usuario._id,
-        estado: 'ABIERTA'
-      }).session(sesion);
-
-      if (!caja) {
-        const error = new Error('Debe abrir una caja antes de registrar pagos');
-        error.status = 409;
-        throw error;
+    try {
+      await sesion.withTransaction(async () => {
+        pagoRegistrado = await ejecutarRegistro(sesion);
+      });
+    } catch (txError) {
+      if (txError.message && (txError.message.includes('replica set') || txError.message.includes('Transaction numbers'))) {
+        pagoRegistrado = await ejecutarRegistro(null);
+      } else {
+        throw txError;
       }
-
-      const cita = await Cita.findById(citaId).session(sesion);
-
-      if (!cita) {
-        const error = new Error('Cita no encontrada');
-        error.status = 404;
-        throw error;
-      }
-
-      if (cita.estado === 'CANCELADA') {
-        const error = new Error('No se pueden registrar pagos para citas canceladas');
-        error.status = 409;
-        throw error;
-      }
-
-      // Serializar movimientos de caja y evitar sobrepagos simultáneos.
-      caja.increment();
-      await caja.save({ session: sesion });
-
-      const pagosPrevios = await Pago.aggregate([
-        {
-          $match: {
-            cita: cita._id,
-            estado: 'REGISTRADO'
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: '$montoCentavos' }
-          }
-        }
-      ]).session(sesion);
-
-      const totalPagado = pagosPrevios[0]?.total || 0;
-      const saldo = cita.precioCentavos - totalPagado;
-
-      if (montoCentavos > saldo) {
-        const error = new Error(
-          `El pago supera el saldo pendiente de ${Math.max(saldo, 0)} centavos`
-        );
-        error.status = 400;
-        throw error;
-      }
-
-      const recibo = `SIGCA-${randomUUID()}`;
-
-      const [pago] = await Pago.create([{
-        cita: cita._id,
-        paciente: cita.paciente,
-        caja: caja._id,
-        registradoPor: req.usuario._id,
-        montoCentavos,
-        metodo,
-        numeroRecibo: recibo,
-        estado: 'REGISTRADO'
-      }], { session: sesion });
-
-      pagoRegistrado = pago;
-    });
+    }
 
     return res.status(201).json({
       mensaje: 'Pago registrado correctamente',
@@ -178,57 +207,82 @@ const anularPago = async (req, res) => {
     });
   }
 
+  const ejecutarAnulacion = async (s) => {
+    const qPago = Pago.findById(id);
+    if (s) qPago.session(s);
+    const pago = await qPago;
+
+    if (!pago) {
+      const error = new Error('Pago no encontrado');
+      error.status = 404;
+      throw error;
+    }
+
+    if (pago.estado !== 'REGISTRADO') {
+      const error = new Error('El pago ya está anulado');
+      error.status = 409;
+      throw error;
+    }
+
+    const qCaja = Caja.findOne({
+      _id: pago.caja,
+      estado: 'ABIERTA'
+    });
+    if (s) qCaja.session(s);
+    const caja = await qCaja;
+
+    if (!caja) {
+      const error = new Error('Solo se pueden anular pagos de una caja abierta');
+      error.status = 409;
+      throw error;
+    }
+
+    if (
+      req.usuario.rol !== 'ADMINISTRADOR' &&
+      !caja.usuario.equals(req.usuario._id)
+    ) {
+      const error = new Error('No tiene permiso para anular este pago');
+      error.status = 403;
+      throw error;
+    }
+
+    caja.increment();
+    if (s) {
+      await caja.save({ session: s });
+    } else {
+      await caja.save();
+    }
+
+    pago.estado = 'ANULADO';
+    pago.anuladoPor = req.usuario._id;
+    pago.fechaAnulacion = new Date();
+    pago.motivoAnulacion = motivo.trim();
+
+    if (s) {
+      await pago.save({ session: s });
+    } else {
+      await pago.save();
+    }
+
+    return pago;
+  };
+
   const sesion = await mongoose.startSession();
 
   try {
     let pagoAnulado;
 
-    await sesion.withTransaction(async () => {
-      const pago = await Pago.findById(id).session(sesion);
-
-      if (!pago) {
-        const error = new Error('Pago no encontrado');
-        error.status = 404;
-        throw error;
+    try {
+      await sesion.withTransaction(async () => {
+        pagoAnulado = await ejecutarAnulacion(sesion);
+      });
+    } catch (txError) {
+      if (txError.message && (txError.message.includes('replica set') || txError.message.includes('Transaction numbers'))) {
+        pagoAnulado = await ejecutarAnulacion(null);
+      } else {
+        throw txError;
       }
-
-      if (pago.estado !== 'REGISTRADO') {
-        const error = new Error('El pago ya está anulado');
-        error.status = 409;
-        throw error;
-      }
-
-      const caja = await Caja.findOne({
-        _id: pago.caja,
-        estado: 'ABIERTA'
-      }).session(sesion);
-
-      if (!caja) {
-        const error = new Error('Solo se pueden anular pagos de una caja abierta');
-        error.status = 409;
-        throw error;
-      }
-
-      if (
-        req.usuario.rol !== 'ADMINISTRADOR' &&
-        !caja.usuario.equals(req.usuario._id)
-      ) {
-        const error = new Error('No tiene permiso para anular este pago');
-        error.status = 403;
-        throw error;
-      }
-
-      caja.increment();
-      await caja.save({ session: sesion });
-
-      pago.estado = 'ANULADO';
-      pago.anuladoPor = req.usuario._id;
-      pago.fechaAnulacion = new Date();
-      pago.motivoAnulacion = motivo.trim();
-
-      await pago.save({ session: sesion });
-      pagoAnulado = pago;
-    });
+    }
 
     return res.status(200).json({
       mensaje: 'Pago anulado correctamente',

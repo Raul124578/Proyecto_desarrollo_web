@@ -8,9 +8,8 @@ import PacientesView from '../views/PacientesView.vue';
 import ResponsablesView from '../views/ResponsablesView.vue';
 import LoginView from '../views/LoginView.vue';
 import CitasCalendarioView from '../views/CitasCalendarioView.vue';
-
-
-
+import CajaView from '../views/CajaView.vue';
+import PagosView from '../views/PagosView.vue';
 
 const routes = [
     {
@@ -23,7 +22,6 @@ const routes = [
         name: 'Servicios',
         component: ServiciosView
     },
-
     {
         path: '/horarios',
         name: 'Horarios',
@@ -40,6 +38,11 @@ const routes = [
         component: SolicitudCitaView
     },
     {
+        path: '/login',
+        name: 'Login',
+        component: LoginView
+    },
+    {
         path: '/admin/pacientes',
         name: 'Pacientes',
         component: PacientesView
@@ -50,19 +53,20 @@ const routes = [
         component: ResponsablesView
     },
     {
-        path: '/login',
-        name: 'Login',
-        component: LoginView
-    },
-    {
         path: '/admin/citas',
         name: 'Citas',
         component: CitasCalendarioView
+    },
+    {
+        path: '/admin/pagos',
+        name: 'Pagos',
+        component: PagosView
+    },
+    {
+        path: '/admin/caja',
+        name: 'Caja',
+        component: CajaView
     }
-
-
-
-
 ];
 
 const router = createRouter({

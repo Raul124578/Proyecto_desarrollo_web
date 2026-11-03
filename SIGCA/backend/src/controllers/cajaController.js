@@ -30,20 +30,34 @@ const manejarError = (res, error) => {
 };
 
 const abrirCaja = async (req, res) => {
-  try {
-    const { montoInicialCentavos } = req.body || {};
+  const { montoInicialCentavos } = req.body || {};
 
-    if (!Number.isSafeInteger(montoInicialCentavos) || montoInicialCentavos < 0) {
-      return res.status(400).json({
-        mensaje: 'El monto inicial debe ser un número entero de centavos igual o mayor a cero'
+  if (
+    !Number.isSafeInteger(montoInicialCentavos) ||
+    montoInicialCentavos < 0
+  ) {
+    return res.status(400).json({
+      mensaje: 'El monto inicial debe ser un número entero de centavos igual o mayor a cero'
+    });
+  }
+
+  try {
+    const cajaExistente = await Caja.findOne({
+      usuario: req.usuario._id,
+      estado: 'ABIERTA'
+    });
+
+    if (cajaExistente) {
+      return res.status(409).json({
+        mensaje: 'Este usuario ya tiene una caja abierta'
       });
     }
 
-    const [caja] = await Caja.create([{
+    const caja = await Caja.create({
       usuario: req.usuario._id,
       montoInicialCentavos,
       estado: 'ABIERTA'
-    }]);
+    });
 
     return res.status(201).json({
       mensaje: 'Caja abierta correctamente',
@@ -91,62 +105,84 @@ const cerrarCaja = async (req, res) => {
     });
   }
 
+  const ejecutarOperacion = async (s) => {
+    const filtro = { _id: id, estado: 'ABIERTA' };
+
+    if (req.usuario.rol !== 'ADMINISTRADOR') {
+      filtro.usuario = req.usuario._id;
+    }
+
+    const consulta = Caja.findOne(filtro);
+    if (s) consulta.session(s);
+    const caja = await consulta;
+
+    if (!caja) {
+      const existeConsulta = Caja.exists({ _id: id });
+      if (s) existeConsulta.session(s);
+      const existe = await existeConsulta;
+
+      if (!existe) {
+        const error = new Error('Caja no encontrada');
+        error.status = 404;
+        throw error;
+      }
+
+      const error = new Error('La caja ya está cerrada o no pertenece a este usuario');
+      error.status = 409;
+      throw error;
+    }
+
+    const aggQuery = [
+      {
+        $match: {
+          caja: caja._id,
+          estado: 'REGISTRADO',
+          metodo: 'EFECTIVO'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$montoCentavos' }
+        }
+      }
+    ];
+
+    const resultado = s ? await Pago.aggregate(aggQuery).session(s) : await Pago.aggregate(aggQuery);
+
+    const totalEfectivo = resultado[0]?.total || 0;
+    const esperado = caja.montoInicialCentavos + totalEfectivo;
+
+    caja.estado = 'CERRADA';
+    caja.fechaCierre = new Date();
+    caja.montoContadoCentavos = montoContadoCentavos;
+    caja.diferenciaCentavos = montoContadoCentavos - esperado;
+    caja.cerradaPor = req.usuario._id;
+
+    if (s) {
+      await caja.save({ session: s });
+    } else {
+      await caja.save();
+    }
+    return caja;
+  };
+
   const sesion = await mongoose.startSession();
 
   try {
     let cajaCerrada;
 
-    await sesion.withTransaction(async () => {
-      const filtro = { _id: id, estado: 'ABIERTA' };
-
-      if (req.usuario.rol !== 'ADMINISTRADOR') {
-        filtro.usuario = req.usuario._id;
+    try {
+      await sesion.withTransaction(async () => {
+        cajaCerrada = await ejecutarOperacion(sesion);
+      });
+    } catch (txError) {
+      if (txError.message && (txError.message.includes('replica set') || txError.message.includes('Transaction numbers'))) {
+        cajaCerrada = await ejecutarOperacion(null);
+      } else {
+        throw txError;
       }
-
-      const caja = await Caja.findOne(filtro).session(sesion);
-
-      if (!caja) {
-        const existe = await Caja.exists({ _id: id }).session(sesion);
-
-        if (!existe) {
-          const error = new Error('Caja no encontrada');
-          error.status = 404;
-          throw error;
-        }
-
-        const error = new Error('La caja ya está cerrada o no pertenece a este usuario');
-        error.status = 409;
-        throw error;
-      }
-
-      const resultado = await Pago.aggregate([
-        {
-          $match: {
-            caja: caja._id,
-            estado: 'REGISTRADO',
-            metodo: 'EFECTIVO'
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: '$montoCentavos' }
-          }
-        }
-      ]).session(sesion);
-
-      const totalEfectivo = resultado[0]?.total || 0;
-      const esperado = caja.montoInicialCentavos + totalEfectivo;
-
-      caja.estado = 'CERRADA';
-      caja.fechaCierre = new Date();
-      caja.montoContadoCentavos = montoContadoCentavos;
-      caja.diferenciaCentavos = montoContadoCentavos - esperado;
-      caja.cerradaPor = req.usuario._id;
-
-      await caja.save({ session: sesion });
-      cajaCerrada = caja;
-    });
+    }
 
     return res.status(200).json({
       mensaje: 'Caja cerrada correctamente',

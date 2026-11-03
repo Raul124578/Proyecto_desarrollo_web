@@ -18,7 +18,7 @@
             type="email" 
             v-model.trim="correo" 
             required 
-            placeholder="admin@kaslemal.edu.gt" 
+            placeholder="admin@sigca.test" 
           />
         </div>
 
@@ -38,8 +38,9 @@
       </form>
 
       <div class="demo-box">
-        <p><strong>Credenciales de prueba:</strong></p>
-        <p>admin@kaslemal.edu.gt | admin123</p>
+        <p><strong>Credenciales de demostración (Seed):</strong></p>
+        <p><strong>Admin:</strong> admin@sigca.test | Password123*</p>
+        <p><strong>Recepción:</strong> recepcion1@sigca.test | Password123*</p>
       </div>
     </div>
   </div>
@@ -55,8 +56,8 @@ const router = useRouter();
 const authStore = useAuthStore();
 const centroStore = useCentroStore();
 
-const correo = ref('admin@kaslemal.edu.gt');
-const password = ref('admin123');
+const correo = ref('admin@sigca.test');
+const password = ref('Password123*');
 const cargando = ref(false);
 const errorLogin = ref('');
 
@@ -65,10 +66,9 @@ const ejecutarLogin = async () => {
     cargando.value = true;
     errorLogin.value = '';
     await authStore.iniciarSesion(correo.value, password.value);
-    // Redirige al panel de pacientes una vez logueado
-    router.push('/admin/pacientes');
+    router.push('/admin/caja');
   } catch (err) {
-    errorLogin.value = 'Credenciales incorrectas o usuario inactivo.';
+    errorLogin.value = err.message || 'Credenciales incorrectas o usuario inactivo.';
   } finally {
     cargando.value = false;
   }
@@ -89,7 +89,7 @@ const ejecutarLogin = async () => {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   padding: 30px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
@@ -100,81 +100,88 @@ const ejecutarLogin = async () => {
 }
 
 .logo-login {
-  width: 55px;
-  height: 55px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 10px;
 }
 
 .login-header h2 {
-  font-size: 1.3rem;
-  color: #0056b3;
+  margin: 0;
+  color: #1a365d;
 }
 
 .login-header p {
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.campo label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #555;
-}
-
-.campo input {
-  padding: 9px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  margin: 5px 0 0;
+  color: #64748b;
   font-size: 0.95rem;
 }
 
+.campo {
+  margin-bottom: 18px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.campo input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.campo input:focus {
+  outline: none;
+  border-color: #2b6cb0;
+}
+
 .btn-entrar {
-  background-color: #007bff;
+  width: 100%;
+  padding: 12px;
+  background-color: #2b6cb0;
   color: white;
   border: none;
-  padding: 10px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   margin-top: 10px;
 }
 
 .btn-entrar:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: #2c5282;
 }
 
 .alerta-error {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #fee2e2;
+  color: #991b1b;
   padding: 10px;
-  border-radius: 4px;
-  font-size: 0.85rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
   margin-bottom: 15px;
   text-align: center;
 }
 
 .demo-box {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  color: #666;
-  text-align: center;
+  margin-top: 25px;
+  padding: 12px;
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.demo-box p {
+  margin: 4px 0;
 }
 </style>
