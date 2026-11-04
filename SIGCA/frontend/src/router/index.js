@@ -9,6 +9,8 @@ import ResponsablesView from '../views/ResponsablesView.vue';
 import LoginView from '../views/LoginView.vue';
 import CitasCalendarioView from '../views/CitasCalendarioView.vue';
 import UsuariosView from '../views/UsuariosView.vue';
+import CajaView from '../views/CajaView.vue';
+import PagosView from '../views/PagosView.vue';
 import { useAuthStore } from '../stores/sesion';
 
 const routes = [
@@ -38,6 +40,11 @@ const routes = [
         component: SolicitudCitaView
     },
     {
+        path: '/login',
+        name: 'Login',
+        component: LoginView
+    },
+    {
         path: '/admin/pacientes',
         name: 'Pacientes',
         component: PacientesView,
@@ -56,11 +63,6 @@ const routes = [
         }
     },
     {
-        path: '/login',
-        name: 'Login',
-        component: LoginView
-    },
-    {
         path: '/admin/usuarios',
         name: 'Usuarios',
         component: UsuariosView,
@@ -76,6 +78,24 @@ const routes = [
         meta: {
             requiresAuth: true,
             roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL']
+        }
+    },
+    {
+        path: '/admin/pagos',
+        name: 'Pagos',
+        component: PagosView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA']
+        }
+    },
+    {
+        path: '/admin/caja',
+        name: 'Caja',
+        component: CajaView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA']
         }
     }
 ];

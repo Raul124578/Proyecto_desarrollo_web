@@ -21,6 +21,8 @@
         <router-link to="/admin/responsables" class="link-admin">Responsables</router-link>
         <router-link to="/admin/citas" class="link-admin">Calendario</router-link>
         <router-link v-if="authStore.esAdmin" to="/admin/usuarios" class="link-admin">Usuarios</router-link>
+        <router-link to="/admin/pagos" class="link-admin">Pagos</router-link>
+        <router-link to="/admin/caja" class="link-admin">Caja Diaria</router-link>
 
         <span class="user-badge">👤 {{ authStore.nombreUsuario }}</span>
         <button @click="salir" class="btn-logout">Salir</button>
@@ -102,41 +104,19 @@ const salir = () => {
 }
 
 .user-badge {
-  font-size: 0.85rem;
-  color: #28a745;
-  font-weight: bold;
-  background-color: #e8f5e9;
+  color: #333;
+  font-size: 0.9rem;
+  background-color: #e9ecef;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 12px;
 }
 
 .btn-logout {
   background-color: #dc3545;
   color: white;
   border: none;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.btn-logout:hover {
-  background-color: #bd2130;
-}
-
-@media (max-width: 768px) {
-  .navbar {
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px;
-    text-align: center;
-  }
-
-  .navbar-links {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-  }
 }
 </style>
-

@@ -19,15 +19,15 @@ export const useAuthStore = defineStore('auth', {
                 const res = await api.post('/auth/login', { correo, password });
                 this.token = res.data.token;
                 this.usuario = res.data.usuario;
+                localStorage.setItem('sigca_token', this.token);
+                localStorage.setItem('sigca_user', JSON.stringify(this.usuario));
             } catch (error) {
+                this.cerrarSesion();
                 throw new Error(
                     error.response?.data?.mensaje ||
                     'No se pudo iniciar sesión. Verifica tus credenciales y que el servidor esté activo.'
                 );
             }
-
-            localStorage.setItem('sigca_token', this.token);
-            localStorage.setItem('sigca_user', JSON.stringify(this.usuario));
         },
 
         cerrarSesion() {
