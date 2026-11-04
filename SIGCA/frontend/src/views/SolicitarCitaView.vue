@@ -121,7 +121,8 @@ const enviadoExitoso = ref(false);
 const errorMensaje = ref(null);
 
 // Regla RN-11: No permitir fechas pasadas (fecha mínima = hoy)
-const fechaMinima = new Date().toISOString().split('T')[0];
+const ahora = new Date();
+const fechaMinima = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
 
 const cargarServicios = async () => {
   try {

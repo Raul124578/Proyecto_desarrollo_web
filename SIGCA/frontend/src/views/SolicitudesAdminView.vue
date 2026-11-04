@@ -421,14 +421,12 @@ const abrirModalConversion = (solicitud) => {
 
   // Formatear fecha preferida para el input datetime-local (YYYY-MM-DDTHH:mm)
   let fechaInicioDefecto = '';
-  if (solicitud.fechaPreferida) {
-    const f = new Date(solicitud.fechaPreferida);
-    const anio = f.getFullYear();
-    const mes = String(f.getMonth() + 1).padStart(2, '0');
-    const dia = String(f.getDate()).padStart(2, '0');
-    const hora = solicitud.horarioPreferido === 'Tarde' ? '14:00' : '09:00';
-    fechaInicioDefecto = `${anio}-${mes}-${dia}T${hora}`;
-  }
+
+if (solicitud.fechaPreferida) {
+  const fecha = String(solicitud.fechaPreferida).slice(0, 10);
+  const hora = solicitud.horarioPreferido === 'Tarde' ? '14:00' : '09:00';
+  fechaInicioDefecto = `${fecha}T${hora}`;
+}
 
   formConversion.value = {
     pacienteId: pacienteCoincidente ? pacienteCoincidente._id : '',
@@ -477,8 +475,19 @@ const ejecutarConversion = async () => {
 
 const formatearFecha = (fechaStr) => {
   if (!fechaStr) return '-';
-  const f = new Date(fechaStr);
-  return f.toLocaleDateString('es-GT', { year: 'numeric', month: 'short', day: 'numeric' });
+
+  const [anio, mes, dia] = String(fechaStr)
+    .slice(0, 10)
+    .split('-')
+    .map(Number);
+
+  const fecha = new Date(anio, mes - 1, dia, 12);
+
+  return fecha.toLocaleDateString('es-GT', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
 };
 
 const formatearFechaCorta = (fechaStr) => {

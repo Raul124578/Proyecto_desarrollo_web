@@ -184,7 +184,27 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import api from '../services/api';
 
-const hoy = new Date().toISOString().split('T')[0];
+const ZONA_HORARIA = 'America/Guatemala';
+
+const partesFecha = (valor) => {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ZONA_HORARIA,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date(valor));
+  const valores = Object.fromEntries(partes.map(p => [p.type, p.value]));
+  return `${valores.year}-${valores.month}-${valores.day}`;
+};
+
+const formatearHora = (valor) => new Intl.DateTimeFormat('en-GB', {
+  timeZone: ZONA_HORARIA,
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23'
+}).format(new Date(valor));
+
+const hoy = partesFecha(new Date());
 
 const fechaActual = ref(new Date());
 const fechaSeleccionada = ref(hoy);
@@ -194,33 +214,8 @@ const mensajeAlerta = ref('');
 const pacientes = ref([]);
 const servicios = ref([]);
 
-// Citas iniciales en memoria para demostración interactiva
-const citas = ref([
-  {
-    _id: 'c1',
-    fecha: hoy,
-    horaInicio: '09:00',
-    horaFin: '09:45',
-    pacienteNombre: 'Juanito Pérez',
-    servicioNombre: 'Atención Psicológica Individual',
-    precio: 250,
-    profesional: 'Licda. Sofía Morales (Psicología)',
-    estado: 'CONFIRMADA',
-    observaciones: 'Primera sesión diagnóstica'
-  },
-  {
-    _id: 'c2',
-    fecha: hoy,
-    horaInicio: '11:00',
-    horaFin: '12:00',
-    pacienteNombre: 'María Celeste Ramos',
-    servicioNombre: 'Estimulación Auditiva Verbal',
-    precio: 300,
-    profesional: 'Dr. Rodrigo Mendoza (Estimulación)',
-    estado: 'PENDIENTE',
-    observaciones: 'Paciente menor de edad acompañado de madre'
-  }
-]);
+// Las citas se cargan desde la API; no usar datos de demostración aquí.
+const citas = ref([]);
 
 const formCita = reactive({
   pacienteId: '',
@@ -351,11 +346,37 @@ const mostrarAlerta = (msg) => {
 
 const cargarDatos = async () => {
   try {
-    const resP = await api.get('/pacientes?estado=ACTIVO');
+    const [resP, resS] = await Promise.all([
+      api.get('/pacientes?estado=ACTIVO'),
+      api.get('/servicios?estado=ACTIVO')
+    ]);
     pacientes.value = resP.data;
-
-    const resS = await api.get('/servicios?estado=ACTIVO');
     servicios.value = resS.data;
+
+    // La API pagina las citas (máximo 100 por página); reunirlas todas.
+    const citasBackend = [];
+    let pagina = 1;
+    let totalPaginas = 1;
+    do {
+      const respuesta = await api.get(`/citas?pagina=${pagina}&limite=100`);
+      const datos = respuesta.data;
+      citasBackend.push(...(datos.citas || []));
+      totalPaginas = datos.totalPaginas || 1;
+      pagina += 1;
+    } while (pagina <= totalPaginas);
+
+    citas.value = citasBackend.map(c => ({
+      _id: c._id,
+      fecha: partesFecha(c.fechaInicio),
+      horaInicio: formatearHora(c.fechaInicio),
+      horaFin: formatearHora(c.fechaFin),
+      pacienteNombre: [c.paciente?.nombres, c.paciente?.apellidos].filter(Boolean).join(' ') || 'Paciente',
+      servicioNombre: c.servicio?.nombre || 'Servicio',
+      precio: Number(c.precioCentavos || 0) / 100,
+      profesional: c.profesional?.nombre || 'Profesional',
+      estado: c.estado,
+      observaciones: c.observaciones || ''
+    }));
 
     if (servicios.value.length > 0) {
       formCita.servicioId = servicios.value[0]._id;
@@ -363,6 +384,7 @@ const cargarDatos = async () => {
     }
   } catch (error) {
     console.error('Error al cargar datos para citas:', error);
+    mostrarAlerta(error.response?.data?.mensaje || 'No se pudieron cargar las citas del servidor');
   }
 };
 
