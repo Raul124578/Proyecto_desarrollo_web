@@ -21,6 +21,8 @@
         <router-link to="/admin/responsables" class="link-admin">Responsables</router-link>
         <router-link to="/admin/citas" class="link-admin">Calendario</router-link>
         <router-link v-if="authStore.esAdmin" to="/admin/usuarios" class="link-admin">Usuarios</router-link>
+        <router-link to="/admin/solicitudes" class="link-admin">Solicitudes</router-link>
+        <router-link to="/admin/materiales" class="link-admin">Materiales</router-link>
         <router-link to="/admin/pagos" class="link-admin">Pagos</router-link>
         <router-link to="/admin/caja" class="link-admin">Caja Diaria</router-link>
 
@@ -71,6 +73,7 @@ const salir = () => {
   display: flex;
   gap: 15px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .navbar-links a {

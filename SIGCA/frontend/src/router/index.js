@@ -12,6 +12,8 @@ import UsuariosView from '../views/UsuariosView.vue';
 import CajaView from '../views/CajaView.vue';
 import PagosView from '../views/PagosView.vue';
 import { useAuthStore } from '../stores/sesion';
+import SolicitudesAdminView from '../views/SolicitudesAdminView.vue';
+import MaterialesView from '../views/MaterialesView.vue';
 
 const routes = [
     {
@@ -79,6 +81,16 @@ const routes = [
             requiresAuth: true,
             roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL']
         }
+    },
+    {
+        path: '/admin/solicitudes',
+        name: 'Solicitudes',
+        component: SolicitudesAdminView
+    },
+    {
+        path: '/admin/materiales',
+        name: 'Materiales',
+        component: MaterialesView
     },
     {
         path: '/admin/pagos',

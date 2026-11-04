@@ -10,6 +10,8 @@ const authRoutes = require('./routes/authRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
 const horarioRoutes = require('./routes/horarioRoutes');
+const solicitudCitaRoutes = require('./routes/solicitudCitaRoutes');
+const materialRoutes = require('./routes/materialRoutes');
 
 const app = express();
 
@@ -36,7 +38,7 @@ app.use('/api/horarios', horarioRoutes);
 app.use('/api/citas', citaRoutes);
 app.use('/api/cajas', cajaRoutes);
 app.use('/api/pagos', pagoRoutes);
+app.use('/api/solicitudes-cita', solicitudCitaRoutes);
+app.use('/api/materiales', materialRoutes);
 
 module.exports = app;
-
-
