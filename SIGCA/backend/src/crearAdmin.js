@@ -13,22 +13,25 @@ const crearAdmin = async () => {
     await Usuario.init();
 
     const correo = 'admin@sigca.test';
-    const existente = await Usuario.findOne({ correo });
+    let admin = await Usuario.findOne({ correo });
 
-    if (existente) {
-      console.log('El usuario ya existe. No se modificó.');
-      return;
+    if (admin) {
+      admin.password = process.env.ADMIN_PASSWORD;
+      admin.rol = 'ADMINISTRADOR';
+      admin.estado = 'ACTIVO';
+      await admin.save();
+      console.log('Administrador actualizado correctamente.');
+    } else {
+      await Usuario.create({
+        nombre: 'Administrador de prueba',
+        correo,
+        password: process.env.ADMIN_PASSWORD,
+        rol: 'ADMINISTRADOR',
+        estado: 'ACTIVO'
+      });
+      console.log('Administrador creado correctamente.');
     }
 
-    await Usuario.create({
-      nombre: 'Administrador de prueba',
-      correo,
-      password: process.env.ADMIN_PASSWORD,
-      rol: 'ADMINISTRADOR',
-      estado: 'ACTIVO'
-    });
-
-    console.log('Administrador creado correctamente.');
     console.log('Correo: admin@sigca.test');
   } catch (error) {
     console.error('No se pudo crear el administrador:', error.message);

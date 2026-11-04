@@ -8,9 +8,8 @@ import PacientesView from '../views/PacientesView.vue';
 import ResponsablesView from '../views/ResponsablesView.vue';
 import LoginView from '../views/LoginView.vue';
 import CitasCalendarioView from '../views/CitasCalendarioView.vue';
-
-
-
+import UsuariosView from '../views/UsuariosView.vue';
+import { useAuthStore } from '../stores/sesion';
 
 const routes = [
     {
@@ -23,7 +22,6 @@ const routes = [
         name: 'Servicios',
         component: ServiciosView
     },
-
     {
         path: '/horarios',
         name: 'Horarios',
@@ -42,12 +40,20 @@ const routes = [
     {
         path: '/admin/pacientes',
         name: 'Pacientes',
-        component: PacientesView
+        component: PacientesView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA']
+        }
     },
     {
         path: '/admin/responsables',
         name: 'Responsables',
-        component: ResponsablesView
+        component: ResponsablesView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA']
+        }
     },
     {
         path: '/login',
@@ -55,19 +61,42 @@ const routes = [
         component: LoginView
     },
     {
+        path: '/admin/usuarios',
+        name: 'Usuarios',
+        component: UsuariosView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR']
+        }
+    },
+    {
         path: '/admin/citas',
         name: 'Citas',
-        component: CitasCalendarioView
+        component: CitasCalendarioView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL']
+        }
     }
-
-
-
-
 ];
 
 const router = createRouter({
     history: createWebHistory(),
     routes
+});
+
+router.beforeEach((to) => {
+    const authStore = useAuthStore();
+
+    if (to.meta.requiresAuth && !authStore.estaAutenticado) {
+        return { name: 'Login' };
+    }
+
+    if (to.meta.roles && !to.meta.roles.includes(authStore.usuario?.rol)) {
+        return { name: 'Home' };
+    }
+
+    return true;
 });
 
 export default router;

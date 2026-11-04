@@ -28,31 +28,61 @@ El backend cuenta con los módulos de pacientes, responsables y servicios. La ra
 backend/
 ├── src/
 │   ├── config/
-|       ├── db.js
+│   │   └── db.js
 │   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── cajaController.js
+│   │   ├── citaController.js
+│   │   ├── citaEstadoController.js
+│   │   ├── citaReprogramacionController.js
+│   │   ├── horarioController.js
 │   │   ├── pacienteController.js
+│   │   ├── pagoController.js
 │   │   ├── responsableController.js
-│   │   └── servicioController.js
+│   │   ├── servicioController.js
+│   │   └── usuarioController.js
 │   ├── middlewares/
+│   │   ├── authMiddleware.js
+│   │   ├── validarHorarioCita.js
 │   │   ├── validarPacienteCita.js
+│   │   ├── validarProfesionalCita.js
 │   │   └── validarServicioCita.js
 │   ├── models/
+│   │   ├── Caja.js
+│   │   ├── Cita.js
+│   │   ├── Horario.js
 │   │   ├── Paciente.js
+│   │   ├── Pago.js
 │   │   ├── Responsable.js
-│   │   └── Servicio.js
+│   │   ├── Servicio.js
+│   │   └── Usuario.js
 │   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── cajaRoutes.js
+│   │   ├── citaRoutes.js
+│   │   ├── horarioRoutes.js
 │   │   ├── pacienteRoutes.js
+│   │   ├── pagoRoutes.js
 │   │   ├── responsableRoutes.js
-│   │   └── servicioRoutes.js
-│   ├── seed.js
-│   └── app.js
+│   │   ├── servicioRoutes.js
+│   │   └── usuarioRoutes.js
+│   ├── app.js
+│   ├── crearAdmin.js
+│   └── seed.js
 ├── server.js
 ├── package.json
 ├── package-lock.json
 ├── .env.example
-├── .gitignore
-└── README.md
+└── .gitignore
 ```
+### Cargar servicios de prueba
+
+Desde la carpeta `backend`, ejecuta:
+
+```bash
+node src/seed.js
+```
+Nota: Este script elimina los servicios existentes y carga cinco servicios de prueba. Úsalo solo con la base de datos local de pruebas.
 
 ## Estructura del frontend
 
@@ -61,8 +91,10 @@ frontend/
 ├── public/
 │   └── logo.jpg
 ├── src/
+│   ├── assets/
 │   ├── components/
 │   │   ├── Footer.vue
+│   │   ├── HelloWorld.vue
 │   │   └── Navbar.vue
 │   ├── router/
 │   │   └── index.js
@@ -80,13 +112,17 @@ frontend/
 │   │   ├── PacientesView.vue
 │   │   ├── ResponsablesView.vue
 │   │   ├── ServiciosView.vue
-│   │   └── SolicitarCitaView.vue
+│   │   ├── SolicitarCitaView.vue
+│   │   └── UsuariosView.vue
 │   ├── App.vue
 │   ├── main.js
 │   └── style.css
 ├── index.html
 ├── vite.config.js
-└── package.json
+├── package.json
+├── package-lock.json
+├── README.md
+└── .gitignore
 ```
 
 ## Requisitos para ejecutar el proyecto
@@ -243,6 +279,18 @@ Internamente, los precios se almacenan en el campo `precioCentavos` para evitar 
 | Caja diaria | `/api/cajas` | Operaciones de caja diaria. |
 | Pagos | `/api/pagos` | Registro y consulta de pagos. |
 
+## Credenciales de demostración
+
+Cuentas disponibles para probar los roles en el entorno local:
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Administrador | `admin@sigca.test` | La definida en `ADMIN_PASSWORD` dentro de `backend/.env` |
+| Recepcionista | `prueba2026@sigca.test` | `SigcaPrueba2026!` |
+| Profesional | `profesional.demo@sigca.test` | `ProfesionalDemo2026!` |
+
+Estas cuentas son solo para pruebas locales. No subas el archivo `backend/.env` al repositorio ni uses estas cuentas en producción.
+
 ## Validaciones implementadas
 
 Los modelos validan campos requeridos y reglas como fechas de nacimiento no futuras, duraciones válidas y precios no negativos.
@@ -283,6 +331,14 @@ El proyecto se desarrolla mediante un repositorio compartido en GitHub.
 Cada integrante debe trabajar en el módulo asignado, respetando los modelos, las rutas y las convenciones existentes.
 
 Antes de integrar nuevas funcionalidades, se recomienda comprobar que el servidor inicia correctamente y que los endpoints existentes continúan funcionando.
+
+## Integrantes y distribución de responsabilidades
+
+| Integrante | Nombre | Carné | Responsabilidades |
+|---|---|---|---|
+| 1 | Stephanie A. | 5190-16-18341 | Portal público y contenido institucional (RF-01 y RF-12). |
+| 2 | Miguel A. | 1990-23-8264 | Solicitudes de citas y materiales (RF-06 y RF-09). |
+| 3 | Humberto T. | 1590-20-14103 | Seguridad, usuarios, validaciones de citas, pagos y caja diaria (RF-02 y RF-13). También documenta el README y las credenciales de demostración. |
 
 ## Consideraciones finales
 

@@ -20,6 +20,7 @@
         <router-link to="/admin/pacientes" class="link-admin">Pacientes</router-link>
         <router-link to="/admin/responsables" class="link-admin">Responsables</router-link>
         <router-link to="/admin/citas" class="link-admin">Calendario</router-link>
+        <router-link v-if="authStore.esAdmin" to="/admin/usuarios" class="link-admin">Usuarios</router-link>
 
         <span class="user-badge">👤 {{ authStore.nombreUsuario }}</span>
         <button @click="salir" class="btn-logout">Salir</button>

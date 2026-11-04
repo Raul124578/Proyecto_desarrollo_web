@@ -8,4 +8,15 @@ const api = axios.create({
     }
 });
 
+// Envía el token en las solicitudes que requieren autenticación.
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('sigca_token');
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+});
+
 export default api;
