@@ -10,6 +10,8 @@ import LoginView from '../views/LoginView.vue';
 import CitasCalendarioView from '../views/CitasCalendarioView.vue';
 import CajaView from '../views/CajaView.vue';
 import PagosView from '../views/PagosView.vue';
+import SolicitudesAdminView from '../views/SolicitudesAdminView.vue';
+import MaterialesView from '../views/MaterialesView.vue';
 
 const routes = [
     {
@@ -56,6 +58,16 @@ const routes = [
         path: '/admin/citas',
         name: 'Citas',
         component: CitasCalendarioView
+    },
+    {
+        path: '/admin/solicitudes',
+        name: 'Solicitudes',
+        component: SolicitudesAdminView
+    },
+    {
+        path: '/admin/materiales',
+        name: 'Materiales',
+        component: MaterialesView
     },
     {
         path: '/admin/pagos',

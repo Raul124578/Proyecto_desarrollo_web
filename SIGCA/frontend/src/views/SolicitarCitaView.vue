@@ -162,16 +162,23 @@ const enviarSolicitud = async () => {
   try {
     enviando.value = true;
     
-    // Petición al backend
-    try {
-      await api.post('/solicitudes-cita', form);
-    } catch (e) {
-      console.log('Solicitud registrada localmente:', form);
-    }
+    // Petición al backend con manejo adecuado de errores
+    await api.post('/solicitudes-cita', {
+      nombre: form.nombre,
+      correo: form.correo,
+      telefono: form.telefono,
+      servicioId: form.servicioId,
+      fechaPreferida: form.fechaPreferida,
+      motivo: form.mensajeAdicional
+    });
 
     enviadoExitoso.value = true;
   } catch (err) {
-    errorMensaje.value = 'Hubo un inconveniente al registrar la solicitud. Intenta nuevamente.';
+    if (err.response && err.response.data && err.response.data.mensaje) {
+      errorMensaje.value = err.response.data.mensaje;
+    } else {
+      errorMensaje.value = 'Hubo un inconveniente al registrar la solicitud. Intenta nuevamente.';
+    }
   } finally {
     enviando.value = false;
   }
