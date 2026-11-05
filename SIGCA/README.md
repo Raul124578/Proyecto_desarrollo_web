@@ -335,10 +335,17 @@ Antes de integrar nuevas funcionalidades, se recomienda comprobar que el servido
 
 | Integrante | Nombre | Carné | Responsabilidades |
 |---|---|---|---|
+<<<<<<< HEAD
 | 1 | Stephanie A. | 5190-16-18341 |Backend y base de datos:modelos MongoDB,API REST,
 pacientes,responsables,servicios.Portal público y contenido institucional (RF-01 y RF-12). |
 | 2 | Miguel A. | 1990-23-8264 |Frontend e integración:vue.js,vue Router,pinia,Portal públicoformularios,calendario, integración con API. Solicitudes de citas y materiales (RF-06 y RF-09). |
 | 3 | Humberto T. | 1590-20-14103 |Seguridad y gestión financiera:autenticación,roles,gestión de citas,pagos,caja diaria,validaciones.| Seguridad, usuarios, validaciones de citas, pagos y caja diaria (RF-02 y RF-13). También documenta el README y las credenciales de demostración. |
+=======
+| 1 | Stephanie A. | 5190-16-18341 | Backend y base de datos:modelos MongoDB,API REST,
+pacientes,responsables,servicios.| Portal público y contenido institucional (RF-01 y RF-12). |
+| 2 | Miguel A. | 1990-23-8264 | Frontend e integración:vue.js,vue Router,pinia,Portal públicoformularios,calendario, integración con API. | Solicitudes de citas y materiales (RF-06 y RF-09). |
+| 3 | Humberto T. | 1590-20-14103 | Seguridad y gestión financiera:autenticación,roles,gestión de citas,pagos,caja diaria,validaciones.| Seguridad, usuarios, validaciones de citas, pagos y caja diaria (RF-02 y RF-13). También documenta el README y las credenciales de demostración. |
+>>>>>>> a729bb82fa6e8b95d8c7b2a3a7e23661a0d4e522
 
 ## Consideraciones finales
 
