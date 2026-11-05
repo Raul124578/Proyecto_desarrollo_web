@@ -136,79 +136,67 @@ Antes de iniciar, es necesario contar con:
 
 ## Instalación y configuración
 
-### 1. Obtener el proyecto
+## Ejecución de datos de prueba
 
-Descargar el repositorio desde GitHub y abrirlo en Visual Studio Code.
+Para cargar los datos iniciales del sistema SIGCA en MongoDB, realizar los siguientes pasos:
 
-### 2. Instalar las dependencias
 
-Abrir una terminal dentro de la carpeta `backend` y ejecutar:
+### 1. Iniciar MongoDB
 
-```bash
-npm install
-```
+Verificar que el servicio MongoDB esté en ejecución y que la replica set `rs0` esté configurado.
 
-### 3. Configurar las variables de entorno
+### 2. Configurar la conexión
 
-Crear un archivo llamado `.env` dentro de `backend`, tomando como referencia `.env.example`.
-
-Ejemplo para desarrollo local:
+Verificar que el archivo `backend/.env` contenga la conexión:
 
 ```env
-PORT=3000
 MONGO_URI=mongodb://127.0.0.1:27017/sigca?replicaSet=rs0
-JWT_SECRET=COLOCAR_UNA_CLAVE_SEGURA
 ```
 
-El archivo `.env` no debe subirse al repositorio, ya que puede contener información privada.
-
-### 4. Iniciar MongoDB
-
-Verificar que MongoDB esté funcionando como un replica set de un solo nodo llamado `rs0`. Es necesario porque los módulos de pagos y caja usan transacciones.
-
-Si es la primera configuración, inicia MongoDB con el replica set `rs0`. Después, en `mongosh`, ejecuta una sola vez:
-
-```javascript
-rs.initiate({
-  _id: "rs0",
-  members: [{ _id: 0, host: "127.0.0.1:27017" }]
-})
-```
-
-Para comprobarlo, ejecuta `rs.status()`. Si el replica set ya está inicializado, no vuelvas a ejecutar `rs.initiate`.
-
-La base de datos utilizada es `sigca`.
-
-### 5. Ejecutar el backend
-
-Desde la carpeta `backend`, ejecutar:
+### 3. Instalar las dependencias del backend
 
 ```bash
-npm run dev
-```
-
-### 6. Ejecutar el frontend (Vue 3 + Vite)
-
-Abrir una segunda terminal dentro de la carpeta `frontend` y ejecutar:
-
-```bash
+cd backend
 npm install
-npm run dev
 ```
 
-El portal público y el panel administrativo estarán disponibles en:
-```text
-http://localhost:5173
-```
-
-### 7. Cargar datos de prueba (Seed)
-
-Para cargar los servicios iniciales del centro K'aslemal en MongoDB, ejecutar desde la carpeta `backend`:
+### 4. Ejecutar el archivo de datos de prueba
 
 ```bash
 node src/seed.js
 ```
 
+Este comando carga los servicios de prueba en la base de datos `sigca`.
+
+### 5. Verificar los datos
+
+Abrir MongoDB Compass y conectarse utilizando:
+
+```text
+mongodb://127.0.0.1:27017/sigca?replicaSet=rs0
+```
+
+Verificar que los registros aparezcan en la colección correspondiente.
+
+### 6. Iniciar el backend
+
+Desde la carpeta `backend`:
+
+```bash
+npm run dev
+```
+
+### 7. Iniciar el frontend
+
+Abrir otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Acceder a [http://localhost:5173](http://localhost:5173) para utilizar el sistema.
 ### 8. Comprobar el funcionamiento
 
 Abrir en el navegador o Postman:
