@@ -22,6 +22,9 @@
         <!-- Alerta de éxito -->
         <div v-if="enviadoExitoso" class="alerta alerta-exito">
           ¡Gracias por comunicarte! Tu mensaje ha sido enviado correctamente. Nos pondremos en contacto pronto.
+          <div style="margin-top: 10px;">
+            <button @click="enviadoExitoso = false" class="btn-nuevo-mensaje">Enviar otro mensaje</button>
+          </div>
         </div>
 
         <!-- Formulario -->
@@ -118,20 +121,17 @@ const errorValidacion = ref(null);
 const enviarMensaje = async () => {
   errorValidacion.value = null;
 
-  // 1. Validaciones requeridas por RF-01
   if (!form.nombre || !form.correo || !form.telefono || !form.asunto || !form.mensaje) {
     errorValidacion.value = 'Por favor completa todos los campos obligatorios.';
     return;
   }
 
-  // Validación estricta de correo electrónico (usuario@dominio.extension)
   const regexCorreo = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!regexCorreo.test(form.correo)) {
     errorValidacion.value = 'Por favor ingresa un correo electrónico válido (ej. nombre@dominio.com o .gt).';
     return;
   }
 
-  // Validación estricta de teléfono: exactamente 8 dígitos numéricos
   const regexTelefono = /^[0-9]{8}$/;
   if (!regexTelefono.test(form.telefono)) {
     errorValidacion.value = 'El número de teléfono debe contener exactamente 8 dígitos numéricos.';
@@ -140,18 +140,15 @@ const enviarMensaje = async () => {
 
   try {
     enviando.value = true;
-    
-    // Intenta enviar a la API del backend
-    try {
-      await api.post('/contacto', form);
-    } catch (e) {
-      // Si el compañero aún no creó la ruta en backend, simulamos éxito para prueba visual
-      console.log('Mensaje recibido localmente:', form);
-    }
-
+    await api.post('/contacto', form);
     enviadoExitoso.value = true;
+    form.nombre = '';
+    form.correo = '';
+    form.telefono = '';
+    form.asunto = '';
+    form.mensaje = '';
   } catch (err) {
-    errorValidacion.value = 'Ocurrió un error al enviar el mensaje. Intenta nuevamente.';
+    errorValidacion.value = err.response?.data?.mensaje || 'Ocurrió un error al enviar el mensaje. Intenta nuevamente.';
   } finally {
     enviando.value = false;
   }
@@ -280,6 +277,16 @@ h2 {
   cursor: not-allowed;
 }
 
+.btn-nuevo-mensaje {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
 .alerta {
   padding: 12px 15px;
   border-radius: 4px;
@@ -298,7 +305,6 @@ h2 {
   border: 1px solid #f5c6cb;
 }
 
-/* Responsive para celulares */
 @media (max-width: 768px) {
   .contacto-layout {
     grid-template-columns: 1fr;

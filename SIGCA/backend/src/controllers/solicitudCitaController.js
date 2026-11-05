@@ -25,6 +25,19 @@ const manejarError = (res, error) => {
   });
 };
 
+// Sincronizar datos si venían de colección previa solicitudes_citas
+const sincronizarColeccionPrevia = async () => {
+  try {
+    const total = await SolicitudCita.countDocuments();
+    if (total === 0 && mongoose.connection.db) {
+      const raw = await mongoose.connection.db.collection('solicitudes_citas').find({}).toArray();
+      if (raw && raw.length > 0) {
+        await SolicitudCita.insertMany(raw.map(({ _id, ...resto }) => ({ _id, ...resto })));
+      }
+    }
+  } catch (_) {}
+};
+
 // 1. Crear solicitud pública (para visitantes)
 const crearSolicitud = async (req, res) => {
   try {
@@ -96,6 +109,8 @@ const crearSolicitud = async (req, res) => {
 // 2. Obtener solicitudes (Administradores / Recepcionistas)
 const obtenerSolicitudes = async (req, res) => {
   try {
+    await sincronizarColeccionPrevia();
+
     const { estado, buscar } = req.query;
     const filtro = {};
 

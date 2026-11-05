@@ -18,6 +18,7 @@
       <!-- 2. Menú de Administración (SOLO si inició sesión) -->
       <template v-if="authStore.estaAutenticado">
         <router-link to="/admin/pacientes" class="link-admin">Pacientes</router-link>
+        <router-link to="/admin/servicios" class="link-admin">Servicios</router-link>
         <router-link to="/admin/responsables" class="link-admin">Responsables</router-link>
         <router-link to="/admin/citas" class="link-admin">Calendario</router-link>
         <router-link v-if="authStore.esAdmin" to="/admin/usuarios" class="link-admin">Usuarios</router-link>

@@ -12,6 +12,9 @@ const servicioRoutes = require('./routes/servicioRoutes');
 const horarioRoutes = require('./routes/horarioRoutes');
 const solicitudCitaRoutes = require('./routes/solicitudCitaRoutes');
 const materialRoutes = require('./routes/materialRoutes');
+const contactoRoutes = require('./routes/contactoRoutes');
+const contenidoInstitucionalRoutes = require('./routes/contenidoInstitucionalRoutes');
+const asignacionMaterialRoutes = require('./routes/asignacionMaterialRoutes');
 
 const app = express();
 
@@ -40,5 +43,8 @@ app.use('/api/cajas', cajaRoutes);
 app.use('/api/pagos', pagoRoutes);
 app.use('/api/solicitudes-cita', solicitudCitaRoutes);
 app.use('/api/materiales', materialRoutes);
+app.use('/api/contacto', contactoRoutes);
+app.use('/api/institucional', contenidoInstitucionalRoutes);
+app.use('/api/asignaciones-materiales', asignacionMaterialRoutes);
 
 module.exports = app;

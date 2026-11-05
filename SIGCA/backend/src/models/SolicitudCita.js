@@ -69,10 +69,9 @@ const solicitudCitaSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  collection: 'solicitudes_citas'
+  collection: 'solicitudesCita'
 });
 
 solicitudCitaSchema.index({ estado: 1, createdAt: -1 });
 
 module.exports = mongoose.model('SolicitudCita', solicitudCitaSchema);
-

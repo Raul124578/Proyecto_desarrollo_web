@@ -14,6 +14,7 @@ import PagosView from '../views/PagosView.vue';
 import { useAuthStore } from '../stores/sesion';
 import SolicitudesAdminView from '../views/SolicitudesAdminView.vue';
 import MaterialesView from '../views/MaterialesView.vue';
+import ServiciosAdminView from '../views/ServiciosAdminView.vue';
 
 const routes = [
     {
@@ -56,6 +57,15 @@ const routes = [
         }
     },
     {
+        path: '/admin/servicios',
+        name: 'AdminServicios',
+        component: ServiciosAdminView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA']
+        }
+    },
+    {
         path: '/admin/responsables',
         name: 'Responsables',
         component: ResponsablesView,
@@ -85,12 +95,20 @@ const routes = [
     {
         path: '/admin/solicitudes',
         name: 'Solicitudes',
-        component: SolicitudesAdminView
+        component: SolicitudesAdminView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA']
+        }
     },
     {
         path: '/admin/materiales',
         name: 'Materiales',
-        component: MaterialesView
+        component: MaterialesView,
+        meta: {
+            requiresAuth: true,
+            roles: ['ADMINISTRADOR', 'RECEPCIONISTA']
+        }
     },
     {
         path: '/admin/pagos',

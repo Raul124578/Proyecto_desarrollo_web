@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const Servicio = require('../models/Servicio');
 
@@ -46,7 +45,7 @@ const manejarError = (res, error) => {
   });
 };
 
-// Registrar servicio
+// Registrar servicio (RF-05)
 const crearServicio = async (req, res) => {
   try {
     const {
@@ -61,20 +60,27 @@ const crearServicio = async (req, res) => {
     let precioCentavos;
 
     try {
-      precioCentavos = convertirPrecio(precio);
+      precioCentavos = convertirPrecio(Number(precio));
     } catch (error) {
       return res.status(400).json({
         mensaje: error.message
       });
     }
 
+    const duracion = Number(duracionMinutos);
+    if (!Number.isInteger(duracion) || duracion <= 0) {
+      return res.status(400).json({
+        mensaje: 'La duración debe ser un número entero mayor a cero'
+      });
+    }
+
     const servicio = await Servicio.create({
       nombre,
       descripcion,
-      duracionMinutos,
+      duracionMinutos: duracion,
       precioCentavos,
-      imagen,
-      estado
+      imagen: imagen || '',
+      estado: estado || 'ACTIVO'
     });
 
     return res.status(201).json({
@@ -147,7 +153,7 @@ const obtenerServicioPorId = async (req, res) => {
   }
 };
 
-// Actualizar servicio
+// Actualizar servicio (RF-05)
 const actualizarServicio = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
@@ -160,7 +166,8 @@ const actualizarServicio = async (req, res) => {
       'nombre',
       'descripcion',
       'duracionMinutos',
-      'imagen'
+      'imagen',
+      'estado'
     ];
 
     const datos = {};
@@ -171,9 +178,19 @@ const actualizarServicio = async (req, res) => {
       }
     }
 
+    if (datos.duracionMinutos !== undefined) {
+      const duracion = Number(datos.duracionMinutos);
+      if (!Number.isInteger(duracion) || duracion <= 0) {
+        return res.status(400).json({
+          mensaje: 'La duración debe ser un entero mayor a cero'
+        });
+      }
+      datos.duracionMinutos = duracion;
+    }
+
     if (Object.prototype.hasOwnProperty.call(req.body, 'precio')) {
       try {
-        datos.precioCentavos = convertirPrecio(req.body.precio);
+        datos.precioCentavos = convertirPrecio(Number(req.body.precio));
       } catch (error) {
         return res.status(400).json({
           mensaje: error.message
@@ -206,7 +223,7 @@ const actualizarServicio = async (req, res) => {
   }
 };
 
-// Activar o desactivar servicio
+// Activar o desactivar servicio (RF-05)
 const cambiarEstadoServicio = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {

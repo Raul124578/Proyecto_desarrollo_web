@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 
@@ -10,19 +9,37 @@ const {
   cambiarEstadoServicio
 } = require('../controllers/servicioController');
 
-// Registrar servicio
-router.post('/', crearServicio);
+const {
+  verificarToken,
+  permitirRoles
+} = require('../middlewares/authMiddleware');
 
-// Consultar servicios
+// Consultar servicios (público para portal y solicitudes)
 router.get('/', obtenerServicios);
 
-// Consultar servicio por ID
+// Consultar servicio por ID (público)
 router.get('/:id', obtenerServicioPorId);
 
-// Actualizar servicio
-router.put('/:id', actualizarServicio);
+// Operaciones administrativas protegidas (RF-05)
+router.post(
+  '/',
+  verificarToken,
+  permitirRoles('ADMINISTRADOR', 'RECEPCIONISTA'),
+  crearServicio
+);
 
-// Activar o desactivar servicio
-router.patch('/:id/estado', cambiarEstadoServicio);
+router.put(
+  '/:id',
+  verificarToken,
+  permitirRoles('ADMINISTRADOR', 'RECEPCIONISTA'),
+  actualizarServicio
+);
+
+router.patch(
+  '/:id/estado',
+  verificarToken,
+  permitirRoles('ADMINISTRADOR', 'RECEPCIONISTA'),
+  cambiarEstadoServicio
+);
 
 module.exports = router;

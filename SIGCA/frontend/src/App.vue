@@ -9,8 +9,16 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue';
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
+import { useCentroStore } from './stores/centro';
+
+const centroStore = useCentroStore();
+
+onMounted(() => {
+  centroStore.cargarDesdeBD();
+});
 </script>
 
 <style scoped>
